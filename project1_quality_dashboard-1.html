@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garment QC Intelligence Dashboard — Sayed Muddassar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0d0d;
+    --paper: #f5f0e8;
+    --cream: #ede8dd;
+    --accent: #c8402a;
+    --accent2: #2a6e4a;
+    --gold: #b8922a;
+    --muted: #7a7060;
+    --border: #d0c9bb;
+    --card: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 4px solid var(--accent);
+  }
+
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .header-left p {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 6px;
+  }
+
+  .header-right {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: #aaa;
+    letter-spacing: 1px;
+  }
+
+  .header-right span {
+    display: block;
+    color: var(--paper);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  /* ─── KPI STRIP ─── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kpi-card {
+    padding: 24px 32px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .kpi-card:last-child { border-right: none; }
+  .kpi-card:hover { background: #fff; }
+
+  .kpi-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .kpi-value.good { color: var(--accent2); }
+  .kpi-value.warn { color: var(--gold); }
+  .kpi-value.bad  { color: var(--accent); }
+
+  .kpi-delta {
+    font-size: 0.78rem;
+    margin-top: 6px;
+    color: var(--muted);
+  }
+
+  .kpi-delta .up   { color: var(--accent2); font-weight: 600; }
+  .kpi-delta .down { color: var(--accent);  font-weight: 600; }
+
+  /* ─── MAIN GRID ─── */
+  .main {
+    padding: 32px 48px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 24px 28px;
+  }
+
+  .card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── BAR CHART ─── */
+  .chart-wrap { width: 100%; }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .bar-label {
+    width: 130px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+  }
+
+  .bar-track {
+    flex: 1;
+    background: var(--cream);
+    height: 28px;
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+    justify-content: flex-end;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #fff;
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
+    width: 0;
+  }
+
+  .bar-fill.green { background: var(--accent2); }
+  .bar-fill.gold  { background: var(--gold); }
+  .bar-fill.red   { background: var(--accent); }
+
+  /* ─── DEFECT TABLE ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  thead tr {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--cream); }
+
+  tbody td {
+    padding: 10px 14px;
+    color: var(--muted);
+  }
+
+  tbody td:first-child {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 1px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  .badge.high   { background: #fde8e4; color: var(--accent); }
+  .badge.medium { background: #fdf3dc; color: var(--gold); }
+  .badge.low    { background: #e4f2ea; color: var(--accent2); }
+
+  /* ─── DONUT CHART ─── */
+  .donut-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  svg.donut { overflow: visible; }
+
+  .donut-legend {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .legend-left { display: flex; align-items: center; color: var(--muted); }
+  .legend-val  { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--ink); }
+
+  /* ─── TREND SPARKLINES ─── */
+  .sparkline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 4px;
+  }
+
+  .spark-card {
+    background: var(--cream);
+    padding: 14px 16px;
+    border-radius: 1px;
+    border: 1px solid var(--border);
+  }
+
+  .spark-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .spark-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+
+  svg.spark { display: block; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--ink);
+    color: var(--muted);
+    text-align: center;
+    padding: 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    margin-top: 8px;
+  }
+
+  footer span { color: var(--paper); }
+
+  /* ─── FILTERS ─── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    padding: 16px 48px;
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card { animation: fadeUp 0.5s ease both; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <h1>Quality Control Intelligence</h1>
+    <p>Garment Manufacturing · Rivesse LLC · 2018–2022</p>
+  </div>
+  <div class="header-right">
+    <span>Sayed Muddassar</span>
+    Portfolio Project 01 · Operations Analytics
+  </div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Period :</span>
+  <button class="filter-btn active" onclick="setFilter(this,'all')">All Years</button>
+  <button class="filter-btn" onclick="setFilter(this,'2019')">2019</button>
+  <button class="filter-btn" onclick="setFilter(this,'2020')">2020</button>
+  <button class="filter-btn" onclick="setFilter(this,'2021')">2021</button>
+  <button class="filter-btn" onclick="setFilter(this,'2022')">2022</button>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-card">
+    <div class="kpi-label">Defect Rate</div>
+    <div class="kpi-value bad" id="kpi-defect">2.1%</div>
+    <div class="kpi-delta"><span class="up">↓ 68%</span> vs. industry avg 6.5%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Inspection Pass Rate</div>
+    <div class="kpi-value good" id="kpi-pass">100%</div>
+    <div class="kpi-delta"><span class="up">↑ Maintained</span> client spec compliance</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Units Inspected</div>
+    <div class="kpi-value" id="kpi-units">48,200</div>
+    <div class="kpi-delta">Across <span class="up">4 years</span> of operation</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">On-Time Delivery</div>
+    <div class="kpi-value good" id="kpi-otd">97.4%</div>
+    <div class="kpi-delta"><span class="up">↑ 12%</span> after process redesign</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex; flex-direction:column; gap:24px;">
+
+    <!-- Monthly Defect Rate Bar Chart -->
+    <div class="card">
+      <div class="section-label">Monthly Performance Overview</div>
+      <h3>Defect Rate by Production Line (%)</h3>
+      <div class="chart-wrap" id="bar-chart">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Defect Log Table -->
+    <div class="card">
+      <div class="section-label">Defect Log & Resolution Tracking</div>
+      <h3>Top Defect Categories — Root Cause Analysis</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Defect Type</th>
+            <th>Occurrences</th>
+            <th>Line</th>
+            <th>Resolution</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody id="defect-table">
+          <!-- Rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex; flex-direction:column; gap:24px;">
+
+    <!-- Donut Chart -->
+    <div class="card">
+      <div class="section-label">Defect Composition</div>
+      <h3>By Category</h3>
+      <div class="donut-wrap">
+        <svg class="donut" width="180" height="180" viewBox="-90 -90 180 180" id="donut-svg">
+          <!-- Rendered by JS -->
+        </svg>
+        <div class="donut-legend" id="donut-legend">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Sparklines -->
+    <div class="card">
+      <div class="section-label">Year-on-Year Trends</div>
+      <h3>Key Metrics Over Time</h3>
+      <div class="sparkline-grid">
+
+        <div class="spark-card">
+          <div class="spark-title">Defect Rate %</div>
+          <div class="spark-val bad">2.1%</div>
+          <svg class="spark" width="100%" height="40" viewBox="0 0 120 40">
+            <polyline points="0,35 30,28 60,22 90,12 120,8" fill="none" stroke="#c8402a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="120" cy="8" r="3.5" fill="#c8402a"/>
+          </svg>
+        </div>
+
+        <div class="spark-card">
+          <div class="spark-title">Pass Rate %</div>
+          <div class="spark-val good">100%</div>
+          <svg class="spark" width="100%" height="40" viewBox="0 0 120 40">
+            <polyline points="0,30 30,22 60,16 90,8 120,4" fill="none" stroke="#2a6e4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="120" cy="4" r="3.5" fill="#2a6e4a"/>
+          </svg>
+        </div>
+
+        <div class="spark-card">
+          <div class="spark-title">On-Time Del. %</div>
+          <div class="spark-val good">97.4%</div>
+          <svg class="spark" width="100%" height="40" viewBox="0 0 120 40">
+            <polyline points="0,32 30,26 60,18 90,10 120,6" fill="none" stroke="#2a6e4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="120" cy="6" r="3.5" fill="#2a6e4a"/>
+          </svg>
+        </div>
+
+        <div class="spark-card">
+          <div class="spark-title">Rework Units</div>
+          <div class="spark-val warn">184</div>
+          <svg class="spark" width="100%" height="40" viewBox="0 0 120 40">
+            <polyline points="0,10 30,16 60,22 90,30 120,34" fill="none" stroke="#b8922a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="120" cy="34" r="3.5" fill="#b8922a"/>
+          </svg>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Insight Box -->
+    <div class="card" style="background:var(--ink); color:var(--paper); border-color:var(--ink);">
+      <div class="section-label" style="color:#666;">Key Insight</div>
+      <p style="font-family:'DM Serif Display',serif; font-size:1.05rem; line-height:1.6; color:var(--paper);">
+        Implementing a <em>fabric-first</em> inspection protocol in Q2 2020 reduced stitching defects by 41%, directly cutting rework costs by an estimated <span style="color:var(--gold);">₹3.2L/year.</span>
+      </p>
+      <p style="font-size:0.78rem; color:#888; margin-top:12px; font-family:'DM Mono',monospace; letter-spacing:1px;">PROCESS IMPROVEMENT · QUALITY ASSURANCE · COST REDUCTION</p>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  Portfolio Project 01 · <span>Sayed Muddassar</span> · Operations Analytics · Power BI | MS Excel | Data Visualization
+</footer>
+
+<script>
+  // ─── DATA ───────────────────────────────────────────────
+  const lines = [
+    { label: 'Line A – Cutting',    val: 1.2, cls: 'green' },
+    { label: 'Line B – Stitching',  val: 3.8, cls: 'red'   },
+    { label: 'Line C – Finishing',  val: 2.4, cls: 'gold'  },
+    { label: 'Line D – Packaging',  val: 0.9, cls: 'green' },
+    { label: 'Line E – Embroidery', val: 2.9, cls: 'gold'  },
+  ];
+
+  const defects = [
+    ['Stitch skipping',  '312', 'Line B', 'Machine calibration', 'high'],
+    ['Fabric pilling',   '204', 'Line C', 'Supplier change',      'medium'],
+    ['Seam misalignment','187', 'Line B', 'Operator retraining',  'high'],
+    ['Color bleeding',   '145', 'Line C', 'Pre-wash protocol',    'medium'],
+    ['Button gap',       '96',  'Line E', 'Template update',      'low'],
+    ['Thread tangle',    '72',  'Line A', 'Tension adjustment',   'low'],
+  ];
+
+  const donutData = [
+    { label: 'Stitching',  pct: 38, color: '#c8402a' },
+    { label: 'Fabric',     pct: 25, color: '#b8922a' },
+    { label: 'Finishing',  pct: 20, color: '#2a6e4a' },
+    { label: 'Embroidery', pct: 11, color: '#4a7eb8' },
+    { label: 'Other',      pct: 6,  color: '#aaa'    },
+  ];
+
+  // ─── BAR CHART ──────────────────────────────────────────
+  const barChart = document.getElementById('bar-chart');
+  const maxVal = Math.max(...lines.map(l => l.val));
+
+  lines.forEach(line => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-label">${line.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${line.cls}" data-target="${(line.val / 6) * 100}">
+          ${line.val}%
+        </div>
+      </div>`;
+    barChart.appendChild(row);
+  });
+
+  // Animate bars on load
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 200);
+
+  // ─── DEFECT TABLE ───────────────────────────────────────
+  const tbody = document.getElementById('defect-table');
+  defects.forEach(([type, count, line, res, sev]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${type}</td>
+      <td style="font-family:'DM Mono',monospace">${count}</td>
+      <td>${line}</td>
+      <td>${res}</td>
+      <td><span class="badge ${sev}">${sev.toUpperCase()}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // ─── DONUT CHART ────────────────────────────────────────
+  const svg = document.getElementById('donut-svg');
+  const legend = document.getElementById('donut-legend');
+  const R = 72, r = 48;
+
+  let cumPct = 0;
+  donutData.forEach(seg => {
+    const start = (cumPct / 100) * 2 * Math.PI - Math.PI / 2;
+    const end   = ((cumPct + seg.pct) / 100) * 2 * Math.PI - Math.PI / 2;
+    const x1 = R * Math.cos(start), y1 = R * Math.sin(start);
+    const x2 = R * Math.cos(end),   y2 = R * Math.sin(end);
+    const large = seg.pct > 50 ? 1 : 0;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d',
+      `M ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2}
+       L ${r * Math.cos(end)} ${r * Math.sin(end)}
+       A ${r} ${r} 0 ${large} 0 ${r * Math.cos(start)} ${r * Math.sin(start)} Z`);
+    path.setAttribute('fill', seg.color);
+    path.style.transition = 'opacity 0.2s';
+    path.addEventListener('mouseenter', () => path.style.opacity = '0.8');
+    path.addEventListener('mouseleave', () => path.style.opacity = '1');
+    svg.appendChild(path);
+
+    // Legend row
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `
+      <div class="legend-left">
+        <span class="legend-dot" style="background:${seg.color}"></span>
+        ${seg.label}
+      </div>
+      <div class="legend-val">${seg.pct}%</div>`;
+    legend.appendChild(row);
+
+    cumPct += seg.pct;
+  });
+
+  // Center text
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('dominant-baseline', 'middle');
+  text.setAttribute('font-family', 'DM Serif Display, serif');
+  text.setAttribute('font-size', '18');
+  text.setAttribute('fill', '#0d0d0d');
+  text.textContent = '1,016';
+  svg.appendChild(text);
+  const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  sub.setAttribute('text-anchor', 'middle');
+  sub.setAttribute('y', '16');
+  sub.setAttribute('font-family', 'DM Mono, monospace');
+  sub.setAttribute('font-size', '7');
+  sub.setAttribute('fill', '#7a7060');
+  sub.textContent = 'TOTAL DEFECTS';
+  svg.appendChild(sub);
+
+  // ─── FILTER BUTTONS ─────────────────────────────────────
+  function setFilter(btn, period) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // In a real dashboard, this would re-query filtered data.
+    // Here we simulate a visual refresh:
+    document.querySelectorAll('.bar-fill').forEach(b => {
+      b.style.width = '0';
+    });
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(bar => {
+        const noise = () => (Math.random() - 0.5) * 15;
+        const base = parseFloat(bar.dataset.target);
+        const adjusted = Math.max(5, Math.min(95, base + noise()));
+        bar.style.width = adjusted + '%';
+      });
+    }, 150);
+  }
+</script>
+</body>
+</html>

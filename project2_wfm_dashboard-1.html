@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workforce Management Dashboard — Sayed Muddassar</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #38bdf8;
+    --accent2: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --muted: #4b6080;
+    --text: #e2eaf5;
+    --text2: #8ba0bb;
+    --glow: rgba(56, 189, 248, 0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo-area h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-area h1 span { color: var(--accent); }
+
+  .logo-area p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent2);
+    letter-spacing: 1px;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--accent2);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .header-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .header-meta span { color: var(--text2); display: block; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 40px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── KPI ROW ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .kpi {
+    background: var(--surface);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+  }
+
+  .kpi.good::before  { background: var(--accent2); }
+  .kpi.info::before  { background: var(--accent); }
+  .kpi.warn::before  { background: var(--warn); }
+  .kpi.bad::before   { background: var(--danger); }
+
+  .kpi:hover { background: var(--surface2); }
+
+  .kpi-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .kpi-num {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+
+  .kpi.good .kpi-num  { color: var(--accent2); }
+  .kpi.info .kpi-num  { color: var(--accent); }
+  .kpi.warn .kpi-num  { color: var(--warn); }
+  .kpi.bad  .kpi-num  { color: var(--danger); }
+
+  .kpi-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ── MAIN GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    min-height: 420px;
+  }
+
+  .panel {
+    background: var(--surface);
+    padding: 24px 28px;
+  }
+
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .panel h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* ── SCHEDULE HEATMAP ── */
+  .heatmap-wrap { overflow-x: auto; }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(12, 1fr);
+    gap: 3px;
+    min-width: 600px;
+  }
+
+  .hm-header {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 2px;
+  }
+
+  .hm-row-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+  }
+
+  .hm-cell {
+    height: 32px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.1s;
+    position: relative;
+  }
+
+  .hm-cell:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    filter: brightness(1.3);
+  }
+
+  /* ── SHRINKAGE TABLE ── */
+  .shrink-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .shrink-table th {
+    text-align: left;
+    padding: 8px 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .shrink-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .shrink-table td:first-child { color: var(--text); font-weight: 500; }
+
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+    width: 0;
+  }
+
+  /* ── SECOND ROW ── */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── LINE CHART ── */
+  .chart-svg { width: 100%; overflow: visible; }
+
+  .axis-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    fill: var(--muted);
+  }
+
+  /* ── AGENT TABLE ── */
+  .agent-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .agent-row:last-child { border-bottom: none; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .agent-info { flex: 1; }
+  .agent-name { font-size: 0.82rem; font-weight: 500; }
+  .agent-role { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); }
+
+  .adherence-chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+  .insight-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    border-radius: 2px;
+  }
+
+  .insight-card.warn { border-left-color: var(--warn); }
+  .insight-card.good { border-left-color: var(--accent2); }
+
+  .insight-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .insight-body {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text2);
+  }
+
+  .insight-body strong { color: var(--text); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 16px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  footer span { color: var(--text2); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel { animation: fadeIn 0.4s ease both; }
+  .panel:nth-child(2) { animation-delay: 0.1s; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-area">
+    <h1>WFM <span>Analytics</span> Hub</h1>
+    <p>Workforce Management · Contact Center Planning &amp; Scheduling</p>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      SIMULATED LIVE
+    </div>
+    <div class="header-meta">
+      <span>Sayed Muddassar</span>
+      Portfolio Project 02 · WFM Analytics
+    </div>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <button class="tab active" onclick="setTab(this)">Staffing Overview</button>
+  <button class="tab" onclick="setTab(this)">Schedule Adherence</button>
+  <button class="tab" onclick="setTab(this)">Shrinkage Analysis</button>
+  <button class="tab" onclick="setTab(this)">Forecast vs Actual</button>
+</div>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi info">
+    <div class="kpi-lbl">Agents Scheduled</div>
+    <div class="kpi-num">142</div>
+    <div class="kpi-sub">↑ +8 vs. last week</div>
+  </div>
+  <div class="kpi good">
+    <div class="kpi-lbl">Schedule Adherence</div>
+    <div class="kpi-num">91.3%</div>
+    <div class="kpi-sub">Target: 90% ✓</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-lbl">Shrinkage Rate</div>
+    <div class="kpi-num">18.4%</div>
+    <div class="kpi-sub">↑ 2.1% from target</div>
+  </div>
+  <div class="kpi good">
+    <div class="kpi-lbl">Service Level</div>
+    <div class="kpi-num">84.7%</div>
+    <div class="kpi-sub">Calls ans. in &lt;20s</div>
+  </div>
+  <div class="kpi bad">
+    <div class="kpi-lbl">Avg Handle Time</div>
+    <div class="kpi-num">6.2m</div>
+    <div class="kpi-sub">↑ 0.4m over target</div>
+  </div>
+</div>
+
+<!-- MAIN ROW 1 -->
+<div class="grid">
+
+  <!-- Heatmap Panel -->
+  <div class="panel">
+    <div class="panel-title">Staffing Heatmap</div>
+    <h3>Agent Coverage by Hour &amp; Day — Week 20, 2026</h3>
+    <div class="heatmap-wrap">
+      <div class="heatmap-grid" id="heatmap">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Shrinkage Panel -->
+  <div class="panel">
+    <div class="panel-title">Shrinkage Breakdown</div>
+    <h3>Categories vs. Target (16%)</h3>
+    <table class="shrink-table" id="shrink-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Rate</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MAIN ROW 2 -->
+<div class="grid2">
+
+  <!-- Line Chart -->
+  <div class="panel">
+    <div class="panel-title">Volume Forecast</div>
+    <h3>Forecast vs. Actual Calls — Today</h3>
+    <svg class="chart-svg" height="180" viewBox="0 0 320 180" id="line-chart">
+      <!-- Rendered by JS -->
+    </svg>
+  </div>
+
+  <!-- Agent Adherence -->
+  <div class="panel">
+    <div class="panel-title">Schedule Adherence</div>
+    <h3>Top Agents — Today</h3>
+    <div id="agent-list"></div>
+  </div>
+
+  <!-- Insights -->
+  <div class="panel">
+    <div class="panel-title">WFM Intelligence</div>
+    <h3>Actionable Insights</h3>
+    <div class="insight-wrap">
+      <div class="insight-card">
+        <div class="insight-title">🔵 Overstaffing Detected</div>
+        <div class="insight-body">Mon 14:00–16:00 has <strong>+18 agents</strong> over Erlang-C optimal. Recommend shift swaps to redistribute to Fri peak.</div>
+      </div>
+      <div class="insight-card warn">
+        <div class="insight-title">⚠ Shrinkage Alert</div>
+        <div class="insight-body">Unplanned leave is <strong>2.4% above target</strong> this week. Friday coverage may drop below minimum threshold.</div>
+      </div>
+      <div class="insight-card good">
+        <div class="insight-title">✅ Forecast Accuracy</div>
+        <div class="insight-body">Volume forecast vs. actual deviation is <strong>±3.2%</strong> — within acceptable WFM tolerance of 5%.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Portfolio Project 02 · <span>Sayed Muddassar</span> · WFM Certified · Contact Center Planning &amp; Scheduling</p>
+  <p>Skills: <span>Workforce Management · Erlang-C · Shrinkage Analysis · Schedule Adherence · Power BI</span></p>
+</footer>
+
+<script>
+  // ── HEATMAP ─────────────────────────────────────────────
+  const hours = ['6AM','8AM','10AM','12PM','2PM','4PM','6PM','8PM','10PM','12AM','2AM','4AM'];
+  const days  = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+
+  const hm = document.getElementById('heatmap');
+
+  // Header row
+  const blank = document.createElement('div');
+  hm.appendChild(blank);
+  hours.forEach(h => {
+    const d = document.createElement('div');
+    d.className = 'hm-header';
+    d.textContent = h;
+    hm.appendChild(d);
+  });
+
+  // Data rows
+  const colorScale = (v) => {
+    // v: 0-100 staff utilization
+    if (v < 30)  return `rgba(56,189,248,${0.15 + v * 0.004})`;   // blue - understaff
+    if (v < 60)  return `rgba(52,211,153,${0.2 + v * 0.005})`;    // green - optimal
+    if (v < 80)  return `rgba(251,191,36,${0.25 + v * 0.005})`;   // amber - high
+    return `rgba(248,113,113,${0.3 + v * 0.004})`;                // red - critical
+  };
+
+  days.forEach(day => {
+    const label = document.createElement('div');
+    label.className = 'hm-row-label';
+    label.textContent = day;
+    hm.appendChild(label);
+
+    hours.forEach((h, i) => {
+      const base = [45, 60, 75, 80, 70, 55, 35, 25, 15, 10, 8, 20];
+      const noise = () => Math.floor((Math.random() - 0.5) * 20);
+      const v = Math.max(5, Math.min(98, base[i] + noise()));
+
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.style.background = colorScale(v);
+      cell.textContent = v > 20 ? v : '';
+      cell.style.color = v > 60 ? '#fff' : 'rgba(255,255,255,0.7)';
+      cell.title = `${day} ${h}: ${v}% utilization`;
+      hm.appendChild(cell);
+    });
+  });
+
+  // ── SHRINKAGE TABLE ──────────────────────────────────────
+  const shrinkData = [
+    ['Unplanned Leave', 7.4, 85],
+    ['Training',        4.2, 48],
+    ['Breaks / Lunch',  3.8, 44],
+    ['Meetings',        2.1, 25],
+    ['System Downtime', 0.9, 11],
+  ];
+
+  const tbody = document.querySelector('#shrink-table tbody');
+  shrinkData.forEach(([cat, rate, width]) => {
+    const tr = document.createElement('tr');
+    const color = rate > 5 ? '#f87171' : rate > 3 ? '#fbbf24' : '#34d399';
+    tr.innerHTML = `
+      <td>${cat}</td>
+      <td style="font-family:'Space Mono',monospace; color:${color}; font-weight:700">${rate}%</td>
+      <td style="min-width:100px">
+        <div class="progress-bar">
+          <div class="progress-fill" data-w="${width}" style="background:${color}"></div>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  setTimeout(() => {
+    document.querySelectorAll('.progress-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 300);
+
+  // ── LINE CHART ───────────────────────────────────────────
+  const svg = document.getElementById('line-chart');
+  const W = 320, H = 160, pad = 30;
+
+  const forecast = [120,145,190,230,210,240,270,255,230,195,160,130];
+  const actual   = [115,138,200,218,225,248,262,258,222,188,155,0];
+  const maxV = Math.max(...forecast, ...actual);
+
+  const px = (i) => pad + (i / (forecast.length - 1)) * (W - pad * 2);
+  const py = (v) => H - pad - (v / maxV) * (H - pad * 2);
+
+  // Grid lines
+  [0.25, 0.5, 0.75, 1].forEach(t => {
+    const y = py(maxV * t);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', pad); line.setAttribute('x2', W - pad);
+    line.setAttribute('y1', y);   line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#1e2d45'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x', pad - 4); lbl.setAttribute('y', y + 3);
+    lbl.setAttribute('text-anchor', 'end');
+    lbl.setAttribute('class', 'axis-label');
+    lbl.textContent = Math.round(maxV * t);
+    svg.appendChild(lbl);
+  });
+
+  // Helper: draw polyline
+  const makePoly = (data, color, dashed) => {
+    const pts = data.map((v, i) => v > 0 ? `${px(i)},${py(v)}` : null).filter(Boolean).join(' ');
+    const el = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    el.setAttribute('points', pts);
+    el.setAttribute('fill', 'none');
+    el.setAttribute('stroke', color);
+    el.setAttribute('stroke-width', '2');
+    el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('stroke-linejoin', 'round');
+    if (dashed) el.setAttribute('stroke-dasharray', '5,4');
+    svg.appendChild(el);
+  };
+
+  makePoly(forecast, '#38bdf8', true);
+  makePoly(actual.filter(v => v > 0), '#34d399', false);
+
+  // Area fill for actual
+  const areaActual = actual.map((v, i) => v > 0 ? `${px(i)},${py(v)}` : null).filter(Boolean);
+  const area = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  const baseY = py(0);
+  const pts = [...areaActual, `${px(actual.filter(v=>v>0).length - 1)},${baseY}`, `${px(0)},${baseY}`].join(' ');
+  area.setAttribute('points', pts);
+  area.setAttribute('fill', 'rgba(52,211,153,0.07)');
+  svg.insertBefore(area, svg.firstChild);
+
+  // Legend
+  [[38, '#38bdf8','Forecast'],[55,'#34d399','Actual']].forEach(([y, c, lbl]) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', W - 90); line.setAttribute('x2', W - 72);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', c); line.setAttribute('stroke-width', 2);
+    svg.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', W - 68); t.setAttribute('y', y + 3);
+    t.setAttribute('class', 'axis-label');
+    t.setAttribute('fill', '#8ba0bb');
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+
+  // ── AGENT LIST ───────────────────────────────────────────
+  const agents = [
+    { name:'Priya Sharma',   role:'Inbound · Team A', adh: 97, color:'#a78bfa' },
+    { name:'Rahul Mehta',    role:'Outbound · Team B', adh: 94, color:'#38bdf8' },
+    { name:'Sunita Das',     role:'Inbound · Team A', adh: 91, color:'#34d399' },
+    { name:'Arjun Verma',    role:'Email Support',    adh: 88, color:'#fbbf24' },
+    { name:'Neha Kapoor',    role:'Chat · Team C',    adh: 82, color:'#f87171' },
+  ];
+
+  const agentList = document.getElementById('agent-list');
+  agents.forEach(a => {
+    const adh_color = a.adh >= 90 ? '#34d399' : a.adh >= 85 ? '#fbbf24' : '#f87171';
+    const bg = a.adh >= 90 ? 'rgba(52,211,153,0.12)' : a.adh >= 85 ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
+    const div = document.createElement('div');
+    div.className = 'agent-row';
+    div.innerHTML = `
+      <div class="avatar" style="background:${a.color}22; color:${a.color}">
+        ${a.name.split(' ').map(w=>w[0]).join('')}
+      </div>
+      <div class="agent-info">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-role">${a.role}</div>
+      </div>
+      <div class="adherence-chip" style="color:${adh_color}; background:${bg}">
+        ${a.adh}%
+      </div>`;
+    agentList.appendChild(div);
+  });
+
+  // ── TAB TOGGLE ───────────────────────────────────────────
+  function setTab(btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
